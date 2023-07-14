@@ -73,6 +73,7 @@ model User {
   GroupAdmin    Chat[]         @relation("GroupAdmin")
   NotifSender   Notification[] @relation("NotifSender")
   NotifReceiver Notification[] @relation("NotifReceiver")
+  Attendance    Attendance[]   @relation("attendance_student")
 }
 
 // Diet
@@ -215,6 +216,7 @@ model Message {
   updatedAt DateTime @updatedAt
 }
 
+// Notification
 enum NotificationType {
   message
   exercise
@@ -236,6 +238,20 @@ model Notification {
 
   sender   User?   @relation("NotifSender", fields: [senderId], references: [id])
   senderId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Attendance
+
+model Attendance {
+  id        String   @id @default(uuid())
+  date      DateTime
+  isPresent Boolean  @default(false)
+
+  student   User   @relation("attendance_student", fields: [studentId], references: [id])
+  studentId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
