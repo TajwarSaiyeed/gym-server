@@ -1,0 +1,242 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  trainer
+  user
+}
+
+enum Gender {
+  male
+  female
+}
+
+enum Goal {
+  gain_weight
+  lose_weight
+  get_fitter
+  gain_more_flexible
+  learn_the_basics
+}
+
+enum Level {
+  rookie
+  beginner
+  intermediate
+  advanced
+  true_beast
+}
+
+// User
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  hashedPassword String
+  image          String
+  role           Role
+  isActive       Boolean? @default(false)
+  gender         Gender
+  age            Int      @default(0)
+  height         Int      @default(0)
+  weight         Int      @default(0)
+  goal           Goal     @default(lose_weight)
+  level          Level    @default(rookie)
+
+  trainer   User?   @relation("Trainer", fields: [trainerId], references: [id])
+  trainerId String?
+  admin     User?   @relation("Admin", fields: [adminId], references: [id])
+  adminId   String?
+  students  User[]  @relation("Trainer")
+  allUsers  User[]  @relation("Admin")
+
+  approved Boolean? @default(false)
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  Fees          Fees[]
+  Diet          Diet[]
+  Exercise      Exercise[]
+  Messages      Message[]
+  Chat          Chat[]
+  GroupAdmin    Chat[]         @relation("GroupAdmin")
+  NotifSender   Notification[] @relation("NotifSender")
+  NotifReceiver Notification[] @relation("NotifReceiver")
+}
+
+// Diet
+
+model DietFoodList {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PeriodWithFoodList {
+  id           String  @id @default(uuid())
+  foodName     String
+  breakfast    Boolean
+  morningMeal  Boolean
+  lunch        Boolean
+  eveningSnack Boolean
+  dinner       Boolean
+
+  diet   Diet   @relation(fields: [dietId], references: [id])
+  dietId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Diet {
+  id                 String               @id @default(uuid())
+  date               DateTime
+  periodWithFoodList PeriodWithFoodList[]
+
+  assignedBy   User   @relation(fields: [assignedById], references: [id])
+  assignedById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Exercise
+
+model ExerciseList {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Workout {
+  id           String @id @default(uuid())
+  exerciseName String
+  sets         Int
+  steps        Int
+  kg           Int
+  restTime     Int
+
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  exerciseId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Exercise {
+  id      String    @id @default(uuid())
+  date    DateTime
+  workOut Workout[]
+
+  assignedBy   User   @relation(fields: [assignedById], references: [id])
+  assignedById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Fees
+
+enum Month {
+  January
+  February
+  March
+  April
+  May
+  June
+  July
+  August
+  September
+  October
+  November
+  December
+}
+
+model Fees {
+  id            String    @id @default(uuid())
+  email         String
+  month         Month
+  year          Int
+  message       String
+  amount        Int
+  isPaid        Boolean   @default(false)
+  transactionId String?
+  paymentDate   DateTime?
+
+  student   User   @relation(fields: [studentId], references: [id])
+  studentId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// // chat
+
+// // chat name, isGroupChat, users, latestMessage, createdAt, updatedAt, groupAdmin
+
+model Chat {
+  id          String  @id @default(uuid())
+  name        String
+  isGroupChat Boolean @default(false)
+  users       User[]
+
+  groupAdmin   User?   @relation("GroupAdmin", fields: [groupAdminId], references: [id])
+  groupAdminId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Messages  Message[]
+}
+
+// // message
+// // sender, content, chat, createdAt, updatedAt
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  chatId    String
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum NotificationType {
+  message
+  exercise
+  diet
+  payment
+  attendance
+  group
+}
+
+model Notification {
+  id               String           @id @default(uuid())
+  type             NotificationType
+  notificationText String
+  isRead           Boolean          @default(false)
+  pathName         String
+
+  receiver   User   @relation("NotifReceiver", fields: [receiverId], references: [id])
+  receiverId String
+
+  sender   User?   @relation("NotifSender", fields: [senderId], references: [id])
+  senderId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
