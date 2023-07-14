@@ -15,7 +15,7 @@ router
    * @route   GET /api/v1/fees
    * @access  Private (Admin, Trainer)
    */
-  .get(protect, adminTrainer, feesControllers.getFees)
+  .get(protect, feesControllers.getFees)
   /**
    * @desc    Add fees
    * @route   POST /api/v1/fees
@@ -23,5 +23,15 @@ router
    *
    */
   .post(protect, adminTrainer, feesControllers.addFees);
+
+router
+  .route("/:id")
+  /**
+   * @desc    Update fees by id (paid)
+   * @route   PATCH /api/v1/fees/:id
+   * @access  Private
+   * @returns {object} fees
+   */
+  .patch(protect, feesControllers.paidFee);
 
 module.exports = router;

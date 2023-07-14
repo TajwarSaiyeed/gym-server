@@ -10,14 +10,31 @@ const prisma = new PrismaClient();
  */
 
 const getFees = asyncHandler(async (req, res) => {
-  const fees = await prisma.fees.findMany({
-    include: {
-      student: {
-        select: {
-          name: true,
-          email: true,
+  if (req.user.role === "trainer" || req.user.role === "admin") {
+    const fees = await prisma.fees.findMany({
+      include: {
+        student: {
+          select: {
+            name: true,
+            email: true,
+          },
         },
       },
+    });
+
+    if (fees) {
+      return res.status(200).json({
+        status: "success",
+        data: fees,
+      });
+    }
+    res.status(400);
+    throw new Error("Invalid fees data");
+  }
+
+  const fees = await prisma.fees.findMany({
+    where: {
+      studentId: req.user.id,
     },
   });
 
@@ -76,7 +93,59 @@ const addFees = asyncHandler(async (req, res) => {
   throw new Error("Invalid fees data");
 });
 
+/**
+ * @desc    Update fees by id (paid)
+ * @route   PATCH /api/v1/fees/:id
+ * @access  Private
+ * @returns {object} fees
+ */
+
+const paidFee = asyncHandler(async (req, res) => {
+  const { transactionId, paymentDate } = req.body;
+
+  // fees find and check
+  const feesExist = await prisma.fees.findFirst({
+    where: {
+      id: req.params.id,
+      studentId: req.user.id,
+    },
+  });
+
+  if (!feesExist) {
+    res.status(400);
+    throw new Error("Fees not found");
+  }
+
+  if (feesExist.isPaid) {
+    res.status(400);
+    throw new Error("Fees already paid");
+  }
+
+  // fees update
+  const fees = await prisma.fees.update({
+    where: {
+      id: req.params.id,
+      studentId: req.user.id,
+    },
+    data: {
+      isPaid: true,
+      transactionId,
+      paymentDate,
+    },
+  });
+
+  if (fees) {
+    return res.status(200).json({
+      status: "success",
+      data: fees,
+    });
+  }
+  res.status(400);
+  throw new Error("Invalid fees data");
+});
+
 module.exports = {
   getFees,
   addFees,
+  paidFee,
 };
