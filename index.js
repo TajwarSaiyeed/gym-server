@@ -1,7 +1,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
-const schedule = require("node-schedule");
 const app = express();
 const port = 5000;
 
