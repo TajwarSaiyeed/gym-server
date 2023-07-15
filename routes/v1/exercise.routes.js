@@ -37,4 +37,22 @@ router
    */
   .delete(protect, adminTrainer, exercise.deleteExercise);
 
+router
+  .route("/assignment/:id")
+  /**
+   * @desc    Get exercise assignment by id
+   * @route   GET /api/v1/exercise/assignment/:id
+   * @access  Private (admin, trainer)
+   */
+  .get(protect, adminTrainer, exercise.getExerciseAssignment);
+
+router
+  .route("/:assignmentId")
+  /**
+   * @desc    Update exercise assignment
+   * @route   PUT /api/v1/exercise/:assignmentId
+   * @access  Private (admin, trainer)
+   */
+  .put(protect, adminTrainer, exercise.updateExerciseAssignment);
+
 module.exports = router;

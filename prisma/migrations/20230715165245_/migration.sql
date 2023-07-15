@@ -13,8 +13,8 @@ CREATE TABLE `User` (
     `weight` INTEGER NOT NULL DEFAULT 0,
     `goal` ENUM('gain_weight', 'lose_weight', 'get_fitter', 'gain_more_flexible', 'learn_the_basics') NOT NULL DEFAULT 'lose_weight',
     `level` ENUM('rookie', 'beginner', 'intermediate', 'advanced', 'true_beast') NOT NULL DEFAULT 'rookie',
-    `TrainerId` VARCHAR(191) NULL,
-    `AdminId` VARCHAR(191) NULL,
+    `trainerId` VARCHAR(191) NULL,
+    `adminId` VARCHAR(191) NULL,
     `approved` BOOLEAN NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -90,6 +90,33 @@ CREATE TABLE `Exercise` (
     `id` VARCHAR(191) NOT NULL,
     `date` DATETIME(3) NOT NULL,
     `assignedById` VARCHAR(191) NOT NULL,
+    `studentId` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ExerciseAssignment` (
+    `id` VARCHAR(191) NOT NULL,
+    `studentId` VARCHAR(191) NOT NULL,
+    `date` DATETIME(3) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ExerciseAssignmentDetail` (
+    `id` VARCHAR(191) NOT NULL,
+    `exerciseId` VARCHAR(191) NOT NULL,
+    `sets` INTEGER NOT NULL,
+    `steps` INTEGER NOT NULL,
+    `kg` INTEGER NOT NULL,
+    `rest` INTEGER NOT NULL,
+    `exerciseAssignmentId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -139,6 +166,33 @@ CREATE TABLE `Message` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Notification` (
+    `id` VARCHAR(191) NOT NULL,
+    `type` ENUM('message', 'exercise', 'diet', 'payment', 'attendance', 'group') NOT NULL,
+    `notificationText` VARCHAR(191) NOT NULL,
+    `isRead` BOOLEAN NOT NULL DEFAULT false,
+    `pathName` VARCHAR(191) NOT NULL,
+    `receiverId` VARCHAR(191) NOT NULL,
+    `senderId` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Attendance` (
+    `id` VARCHAR(191) NOT NULL,
+    `date` DATETIME(3) NOT NULL,
+    `isPresent` BOOLEAN NOT NULL DEFAULT false,
+    `studentId` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `_ChatToUser` (
     `A` VARCHAR(191) NOT NULL,
     `B` VARCHAR(191) NOT NULL,
@@ -148,10 +202,10 @@ CREATE TABLE `_ChatToUser` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `User` ADD CONSTRAINT `User_TrainerId_fkey` FOREIGN KEY (`TrainerId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `User` ADD CONSTRAINT `User_trainerId_fkey` FOREIGN KEY (`trainerId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User` ADD CONSTRAINT `User_AdminId_fkey` FOREIGN KEY (`AdminId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `User` ADD CONSTRAINT `User_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PeriodWithFoodList` ADD CONSTRAINT `PeriodWithFoodList_dietId_fkey` FOREIGN KEY (`dietId`) REFERENCES `Diet`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -166,6 +220,12 @@ ALTER TABLE `Workout` ADD CONSTRAINT `Workout_exerciseId_fkey` FOREIGN KEY (`exe
 ALTER TABLE `Exercise` ADD CONSTRAINT `Exercise_assignedById_fkey` FOREIGN KEY (`assignedById`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Exercise` ADD CONSTRAINT `Exercise_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ExerciseAssignmentDetail` ADD CONSTRAINT `ExerciseAssignmentDetail_exerciseAssignmentId_fkey` FOREIGN KEY (`exerciseAssignmentId`) REFERENCES `ExerciseAssignment`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Fees` ADD CONSTRAINT `Fees_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -176,6 +236,15 @@ ALTER TABLE `Message` ADD CONSTRAINT `Message_chatId_fkey` FOREIGN KEY (`chatId`
 
 -- AddForeignKey
 ALTER TABLE `Message` ADD CONSTRAINT `Message_senderId_fkey` FOREIGN KEY (`senderId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_receiverId_fkey` FOREIGN KEY (`receiverId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_senderId_fkey` FOREIGN KEY (`senderId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Attendance` ADD CONSTRAINT `Attendance_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_ChatToUser` ADD CONSTRAINT `_ChatToUser_A_fkey` FOREIGN KEY (`A`) REFERENCES `Chat`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -125,12 +125,12 @@ model ExerciseList {
 }
 
 model Workout {
-  id           String @id @default(uuid())
-  exerciseName String
-  sets         Int
-  steps        Int
-  kg           Int
-  restTime     Int
+  id             String @id @default(uuid())
+  exerciseNameID String @map("exerciseName")
+  sets           Int
+  steps          Int
+  kg             Int
+  restTime       Int
 
   exercise   Exercise @relation(fields: [exerciseId], references: [id])
   exerciseId String
@@ -149,6 +149,29 @@ model Exercise {
 
   student   User   @relation("exercise_student", fields: [studentId], references: [id])
   studentId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExerciseAssignment {
+  id        String                     @id @default(uuid())
+  studentId String
+  date      DateTime
+  exercises ExerciseAssignmentDetail[]
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+}
+
+model ExerciseAssignmentDetail {
+  id                   String             @id @default(uuid())
+  exerciseId           String
+  sets                 Int
+  steps                Int
+  kg                   Int
+  rest                 Int
+  exerciseAssignment   ExerciseAssignment @relation(fields: [exerciseAssignmentId], references: [id])
+  exerciseAssignmentId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
