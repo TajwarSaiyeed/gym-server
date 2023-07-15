@@ -63,17 +63,19 @@ model User {
 
   approved Boolean? @default(false)
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  Fees          Fees[]
-  Diet          Diet[]
-  Exercise      Exercise[]
-  Messages      Message[]
-  Chat          Chat[]
-  GroupAdmin    Chat[]         @relation("GroupAdmin")
-  NotifSender   Notification[] @relation("NotifSender")
-  NotifReceiver Notification[] @relation("NotifReceiver")
-  Attendance    Attendance[]   @relation("attendance_student")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Fees      Fees[]
+  Diet      Diet[]
+
+  Messages            Message[]
+  Chat                Chat[]
+  GroupAdmin          Chat[]         @relation("GroupAdmin")
+  NotifSender         Notification[] @relation("NotifSender")
+  NotifReceiver       Notification[] @relation("NotifReceiver")
+  Attendance          Attendance[]   @relation("attendance_student")
+  Exercise_Student    Exercise[]     @relation("exercise_student")
+  Exercise_AssignedBy Exercise[]     @relation("exercise_assignedBy")
 }
 
 // Diet
@@ -142,8 +144,11 @@ model Exercise {
   date    DateTime
   workOut Workout[]
 
-  assignedBy   User   @relation(fields: [assignedById], references: [id])
+  assignedBy   User   @relation("exercise_assignedBy", fields: [assignedById], references: [id])
   assignedById String
+
+  student   User   @relation("exercise_student", fields: [studentId], references: [id])
+  studentId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

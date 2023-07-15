@@ -4,7 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 /**
- * @desc    Get all exercise
+ * @desc    Get all exercise names
  * @route   GET /api/v1/exercise
  * @access  Private
  */
@@ -19,7 +19,7 @@ const getAllExercise = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Add new exercise
+ * @desc    Add new exercise name
  * @route   POST /api/v1/exercise
  * @access  Private (admin, trainer)
  */
@@ -54,7 +54,7 @@ const addNewExercise = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Delete exercise
+ * @desc    Delete exercise name
  * @route   DELETE /api/v1/exercise/:id
  * @access  Private (admin, trainer)
  * @note    id is exercise id
@@ -87,4 +87,17 @@ const deleteExercise = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getAllExercise, addNewExercise, deleteExercise };
+/**
+ * @desc    Assign exercise to client
+ * @route   PUT /api/v1/exercise
+ * @access  Private (admin, trainer)
+ */
+
+const assignExerciseToClient = asyncHandler(async (req, res) => {});
+
+module.exports = {
+  getAllExercise,
+  addNewExercise,
+  deleteExercise,
+  assignExerciseToClient,
+};
