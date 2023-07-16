@@ -112,7 +112,15 @@ const getExerciseAssignment = asyncHandler(async (req, res) => {
 
   const exerciseAssignment = await prisma.exercise.findMany({
     where: { studentId },
-    include: { exercises: true },
+    include: {
+      exercises: {
+        include: {
+          exerciseName: {
+            select: { name: true },
+          },
+        },
+      },
+    },
   });
 
   // if exercise found and match for today's date
