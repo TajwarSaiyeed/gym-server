@@ -77,29 +77,26 @@ model User {
 // Diet
 
 model DietFoodList {
-  id   String @id @default(uuid())
-  name String
-
+  id           String               @id @default(uuid())
+  name         String
   dietFoodName PeriodWithFoodList[] @relation("DietFoodList")
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
 }
 
 model PeriodWithFoodList {
-  id           String       @id @default(uuid())
-  dietFoodName DietFoodList @relation("DietFoodList", fields: [dietFoodId], references: [id])
-  dietFoodId   String
-  breakfast    Boolean
-  morningMeal  Boolean
-  lunch        Boolean
-  eveningSnack Boolean
-  dinner       Boolean
-
-  diet   Diet   @relation(fields: [dietId], references: [id])
-  dietId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String       @id @default(uuid())
+  dietFoodName     DietFoodList @relation("DietFoodList", fields: [dietFoodId], references: [id])
+  dietFoodId       String
+  breakfast        Boolean
+  morningMeal      Boolean
+  lunch            Boolean
+  eveningSnack     Boolean
+  dinner           Boolean
+  diet             Diet         @relation(fields: [dietAssignmentId], references: [id])
+  dietAssignmentId String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 }
 
 model Diet {
@@ -140,9 +137,8 @@ model WorkOut {
   rest                 Int
   exercise             Exercise     @relation(fields: [exerciseAssignmentId], references: [id])
   exerciseAssignmentId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 }
 
 // Fees
@@ -172,12 +168,10 @@ model Fees {
   isPaid        Boolean   @default(false)
   transactionId String?
   paymentDate   DateTime?
-
-  student   User   @relation(fields: [studentId], references: [id])
-  studentId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  student       User      @relation(fields: [studentId], references: [id])
+  studentId     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 // // chat
@@ -185,17 +179,15 @@ model Fees {
 // // chat name, isGroupChat, users, latestMessage, createdAt, updatedAt, groupAdmin
 
 model Chat {
-  id          String  @id @default(uuid())
-  name        String
-  isGroupChat Boolean @default(false)
-  users       User[]
-
-  groupAdmin   User?   @relation("GroupAdmin", fields: [groupAdminId], references: [id])
+  id           String    @id @default(uuid())
+  name         String
+  isGroupChat  Boolean   @default(false)
+  users        User[]
+  groupAdmin   User?     @relation("GroupAdmin", fields: [groupAdminId], references: [id])
   groupAdminId String?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Messages  Message[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  Messages     Message[]
 }
 
 // // message
@@ -228,15 +220,12 @@ model Notification {
   notificationText String
   isRead           Boolean          @default(false)
   pathName         String
-
-  receiver   User   @relation("NotifReceiver", fields: [receiverId], references: [id])
-  receiverId String
-
-  sender   User?   @relation("NotifSender", fields: [senderId], references: [id])
-  senderId String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  receiver         User             @relation("NotifReceiver", fields: [receiverId], references: [id])
+  receiverId       String
+  sender           User?            @relation("NotifSender", fields: [senderId], references: [id])
+  senderId         String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
 // Attendance
@@ -245,10 +234,8 @@ model Attendance {
   id        String   @id @default(uuid())
   date      DateTime
   isPresent Boolean  @default(false)
-
-  student   User   @relation("attendance_student", fields: [studentId], references: [id])
+  student   User     @relation("attendance_student", fields: [studentId], references: [id])
   studentId String
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
