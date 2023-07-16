@@ -110,14 +110,41 @@ const getExerciseAssignment = asyncHandler(async (req, res) => {
     throw new Error("Client not found");
   }
 
-  const exerciseAssignment = await prisma.exerciseAssignment.findMany({
+  const exerciseAssignment = await prisma.exercise.findMany({
     where: { studentId },
     include: { exercises: true },
   });
 
+  // if exercise found and match for today's date
+  if (exerciseAssignment.length > 0) {
+    const currentDate = new Date().toDateString();
+
+    const exerciseAssignmentForToday = exerciseAssignment.find((assignment) => {
+      return assignment.date.toDateString() === currentDate;
+    });
+
+    // console.log(exerciseAssignmentForToday);
+
+    if (exerciseAssignmentForToday) {
+      return res.status(200).json({
+        status: "success",
+        data: exerciseAssignmentForToday,
+      });
+    }
+
+    // if no match for today's date
+    return res.status(200).json({
+      status: "success",
+      data: [],
+      message: "No exercise assignment found for today",
+    });
+  }
+
+  // if no exercise found
   res.status(200).json({
     status: "success",
-    data: exerciseAssignment,
+    data: [],
+    message: "No exercise assignment found",
   });
 });
 
@@ -129,30 +156,32 @@ const getExerciseAssignment = asyncHandler(async (req, res) => {
 const assignExerciseToClient = asyncHandler(async (req, res) => {
   const { studentId, exercises } = req.body;
 
-  try {
-    const client = await prisma.user.findUnique({
-      where: { id: studentId },
+  const client = await prisma.user.findUnique({
+    where: { id: studentId },
+  });
+
+  if (!client) {
+    return res.status(404).json({
+      status: "error",
+      message: "Client not found",
     });
+  }
 
-    if (!client) {
-      return res.status(404).json({ error: "Client not found" });
-    }
+  const currentDate = new Date().toDateString();
 
-    const currentDate = new Date().toISOString();
+  const exerciseAssignments = await prisma.exercise.findMany({
+    where: {
+      studentId,
+    },
+    include: { exercises: true },
+  });
 
-    // Find exercise assignment for the current date
-    let exerciseAssignment = await prisma.exerciseAssignment.findFirst({
-      where: {
-        studentId,
-        date: currentDate,
-      },
-      include: { exercises: true },
-    });
+  let updatedAssignment = null;
 
-    if (exerciseAssignment) {
-      // Update existing exercise assignment and its associated exercise details
-      exerciseAssignment = await prisma.exerciseAssignment.update({
-        where: { id: exerciseAssignment.id },
+  const updatePromises = exerciseAssignments.map(async (assignment) => {
+    if (assignment.date.toDateString() === currentDate) {
+      const updated = await prisma.exercise.update({
+        where: { id: assignment.id },
         data: {
           exercises: {
             deleteMany: {},
@@ -167,71 +196,86 @@ const assignExerciseToClient = asyncHandler(async (req, res) => {
         },
         include: { exercises: true },
       });
-
-      res.json({
-        message: "Exercise assignment updated successfully",
-        exerciseAssignment,
-      });
-    } else {
-      // Create new exercise assignment for the client on the current date
-      exerciseAssignment = await prisma.exerciseAssignment.create({
-        data: {
-          studentId,
-          date: currentDate,
-          exercises: {
-            create: exercises.map((exercise) => ({
-              exerciseId: exercise.exerciseId,
-              sets: exercise.sets,
-              steps: exercise.steps,
-              kg: exercise.kg,
-              rest: exercise.rest,
-            })),
-          },
-        },
-        include: { exercises: true },
-      });
-
-      res.json({
-        message: "Exercise assignment created successfully",
-        exerciseAssignment,
-      });
+      updatedAssignment = updated;
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+  });
+
+  await Promise.all(updatePromises);
+
+  if (updatedAssignment) {
+    return res.status(200).json({
+      status: "success",
+      message: "Exercise assignment updated successfully",
+      data: updatedAssignment,
+    });
   }
+  // Create new exercise assignment for the client on the current date
+  const create = await prisma.exercise.create({
+    data: {
+      studentId,
+      date: new Date(),
+      exercises: {
+        create: exercises.map((exercise) => ({
+          exerciseId: exercise.exerciseId,
+          sets: exercise.sets,
+          steps: exercise.steps,
+          kg: exercise.kg,
+          rest: exercise.rest,
+        })),
+      },
+    },
+    include: { exercises: true },
+  });
+
+  if (!create) {
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to create exercise assignment",
+    });
+  }
+
+  console.log("check 7");
+
+  return res.json({
+    status: "success",
+    message: "Exercise assignment created successfully",
+    data: create,
+  });
 });
 
-const updateExerciseAssignment = asyncHandler(async (req, res) => {
-  const { assignmentId } = req.params;
-  const { exercises } = req.body;
+/**
+ * @desc    Unassign exercise from client
+ * @route   DELETE /api/v1/exercise
+ * @access  Private (admin, trainer)
+ */
+const unassignExerciseFromClient = asyncHandler(async (req, res) => {
+  const { id } = req.body;
 
-  try {
-    const exerciseAssignment = await prisma.exerciseAssignment.update({
-      where: { id: assignmentId },
-      data: {
-        exercises: {
-          deleteMany: {},
-          create: exercises.map((exercise) => ({
-            exerciseId: exercise.exerciseId,
-            sets: exercise.sets,
-            steps: exercise.steps,
-            kg: exercise.kg,
-            rest: exercise.rest,
-          })),
-        },
-      },
-      include: { exercises: true },
-    });
-
-    res.json({
-      message: "Exercise assignment updated successfully",
-      exerciseAssignment,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+  if (!id) {
+    return res.status(400).json({ error: "Invalid exercise id" });
   }
+
+  const exerciseExists = await prisma.exercise.findUnique({
+    where: { id },
+    include: { exercises: true },
+  });
+
+  if (!exerciseExists) {
+    return res.status(400).json({ error: "Exercise does not exist" });
+  }
+
+  await prisma.workOut.deleteMany({
+    where: { exerciseAssignmentId: id },
+  });
+
+  await prisma.exercise.delete({
+    where: { id },
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Exercise deleted successfully",
+  });
 });
 
 module.exports = {
@@ -240,5 +284,5 @@ module.exports = {
   deleteExercise,
   getExerciseAssignment,
   assignExerciseToClient,
-  updateExerciseAssignment,
+  unassignExerciseFromClient,
 };

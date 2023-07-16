@@ -68,14 +68,12 @@ model User {
   Fees      Fees[]
   Diet      Diet[]
 
-  Messages            Message[]
-  Chat                Chat[]
-  GroupAdmin          Chat[]         @relation("GroupAdmin")
-  NotifSender         Notification[] @relation("NotifSender")
-  NotifReceiver       Notification[] @relation("NotifReceiver")
-  Attendance          Attendance[]   @relation("attendance_student")
-  Exercise_Student    Exercise[]     @relation("exercise_student")
-  Exercise_AssignedBy Exercise[]     @relation("exercise_assignedBy")
+  Messages      Message[]
+  Chat          Chat[]
+  GroupAdmin    Chat[]         @relation("GroupAdmin")
+  NotifSender   Notification[] @relation("NotifSender")
+  NotifReceiver Notification[] @relation("NotifReceiver")
+  Attendance    Attendance[]   @relation("attendance_student")
 }
 
 // Diet
@@ -124,53 +122,23 @@ model ExerciseList {
   updatedAt DateTime @updatedAt
 }
 
-model Workout {
-  id             String @id @default(uuid())
-  exerciseNameID String @map("exerciseName")
-  sets           Int
-  steps          Int
-  kg             Int
-  restTime       Int
-
-  exercise   Exercise @relation(fields: [exerciseId], references: [id])
-  exerciseId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Exercise {
-  id      String    @id @default(uuid())
-  date    DateTime
-  workOut Workout[]
-
-  assignedBy   User   @relation("exercise_assignedBy", fields: [assignedById], references: [id])
-  assignedById String
-
-  student   User   @relation("exercise_student", fields: [studentId], references: [id])
-  studentId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model ExerciseAssignment {
-  id        String                     @id @default(uuid())
+  id        String    @id @default(uuid())
   studentId String
   date      DateTime
-  exercises ExerciseAssignmentDetail[]
-  createdAt DateTime                   @default(now())
-  updatedAt DateTime                   @updatedAt
+  exercises WorkOut[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
-model ExerciseAssignmentDetail {
-  id                   String             @id @default(uuid())
+model WorkOut {
+  id                   String   @id @default(uuid())
   exerciseId           String
   sets                 Int
   steps                Int
   kg                   Int
   rest                 Int
-  exerciseAssignment   ExerciseAssignment @relation(fields: [exerciseAssignmentId], references: [id])
+  exercise             Exercise @relation(fields: [exerciseAssignmentId], references: [id])
   exerciseAssignmentId String
 
   createdAt DateTime @default(now())

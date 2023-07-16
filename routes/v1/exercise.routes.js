@@ -25,7 +25,13 @@ router
    * @route   PUT /api/v1/exercise
    * @access  Private (admin, trainer)
    */
-  .put(protect, adminTrainer, exercise.assignExerciseToClient);
+  .put(protect, adminTrainer, exercise.assignExerciseToClient)
+  /**
+   * @desc    Unassign exercise from client
+   * @route   DELETE /api/v1/exercise
+   * @access  Private (admin, trainer)
+   */
+  .delete(protect, adminTrainer, exercise.unassignExerciseFromClient);
 
 router
   .route("/:id")
@@ -45,14 +51,5 @@ router
    * @access  Private (admin, trainer)
    */
   .get(protect, adminTrainer, exercise.getExerciseAssignment);
-
-router
-  .route("/:assignmentId")
-  /**
-   * @desc    Update exercise assignment
-   * @route   PUT /api/v1/exercise/:assignmentId
-   * @access  Private (admin, trainer)
-   */
-  .put(protect, adminTrainer, exercise.updateExerciseAssignment);
 
 module.exports = router;
