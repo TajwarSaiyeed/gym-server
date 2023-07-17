@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 const getAllFood = asyncHandler(async (req, res) => {
   const food = await prisma.dietFoodList.findMany();
 
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     data: food,
   });
@@ -84,6 +84,83 @@ const deleteFood = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Food deleted successfully",
+  });
+});
+
+/**
+ * @desc    Get diet assignment by id from body
+ * @route   GET /api/v1/diet/assignment
+ * @access  Private (admin, trainer, user)
+ */
+const getDietAssignment = asyncHandler(async (req, res) => {
+  if (req.user.role === "trainer" || req.user.role === "admin") {
+    const studentId = req.body.id;
+
+    if (!studentId) {
+      res.status(400);
+      throw new Error("Invalid student id");
+    }
+
+    const client = await prisma.user.findUnique({
+      where: { id: studentId },
+    });
+
+    if (!client) {
+      res.status(404);
+      throw new Error("Client not found");
+    }
+
+    const dietAssignment = await prisma.diet.findMany({
+      where: { studentId },
+      include: {
+        periodWithFoodList: {
+          include: {
+            dietFoodName: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!dietAssignment || dietAssignment.length === 0) {
+      return res.status(200).json({
+        status: "success",
+        data: [],
+        message: "No diet assignment found",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data: dietAssignment,
+    });
+  }
+
+  const dietAssignment = await prisma.diet.findMany({
+    where: { studentId: req.user.id },
+    include: {
+      periodWithFoodList: {
+        include: {
+          dietFoodName: {
+            select: { name: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!dietAssignment || dietAssignment.length === 0) {
+    return res.status(200).json({
+      status: "success",
+      data: [],
+      message: "No diet assignment found",
+    });
+  }
+
+  return res.status(200).json({
+    status: "success",
+    data: dietAssignment,
   });
 });
 
@@ -240,6 +317,7 @@ module.exports = {
   getAllFood,
   addNewFood,
   deleteFood,
+  getDietAssignment,
   assignFoodToClient,
   unassignFoodFromClient,
 };

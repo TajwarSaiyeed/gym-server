@@ -33,7 +33,6 @@ router
    */
   .delete(protect, adminTrainer, diet.unassignFoodFromClient);
 
-// delete food
 router
   .route("/:id")
   /**
@@ -43,5 +42,14 @@ router
    * @note    id is diet food id
    */
   .delete(protect, adminTrainer, diet.deleteFood);
+
+router
+  .route("/assignment")
+  /**
+   * @desc    Get diet assignment by id from body
+   * @route   GET /api/v1/diet/assignment
+   * @access  Private (admin, trainer, user)
+   */
+  .get(protect, diet.getDietAssignment);
 
 module.exports = router;

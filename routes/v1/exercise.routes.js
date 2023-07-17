@@ -44,12 +44,12 @@ router
   .delete(protect, adminTrainer, exercise.deleteExercise);
 
 router
-  .route("/assignment/:id")
+  .route("/assignment")
   /**
-   * @desc    Get exercise assignment by id
-   * @route   GET /api/v1/exercise/assignment/:id
+   * @desc    Get exercise assignment by id from body
+   * @route   GET /api/v1/exercise/assignment
    * @access  Private (admin, trainer)
    */
-  .get(protect, adminTrainer, exercise.getExerciseAssignment);
+  .get(protect, exercise.getExerciseAssignment);
 
 module.exports = router;

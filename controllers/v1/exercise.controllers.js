@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 const getAllExercise = asyncHandler(async (req, res) => {
   const exercises = await prisma.exerciseList.findMany();
 
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     data: exercises,
   });
@@ -88,30 +88,57 @@ const deleteExercise = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc Get all exercise assignments for a client
- * @route GET /api/v1/exercise/assignment/:id
- * @access Private (admin, trainer)
+ * @desc    Get exercise assignment by id from body
+ * @route   GET /api/v1/exercise/assignment
+ * @access  Private (admin, trainer)
  */
-
 const getExerciseAssignment = asyncHandler(async (req, res) => {
-  const studentId = req.params.id;
+  if (req.user.role === "trainer" || req.user.role === "admin") {
+    const studentId = req.body.id;
 
-  if (!studentId) {
-    res.status(400);
-    throw new Error("Invalid student id");
-  }
+    if (!studentId) {
+      res.status(400);
+      throw new Error("Invalid student id");
+    }
 
-  const client = await prisma.user.findUnique({
-    where: { id: studentId },
-  });
+    const client = await prisma.user.findUnique({
+      where: { id: studentId },
+    });
 
-  if (!client) {
-    res.status(404);
-    throw new Error("Client not found");
+    if (!client) {
+      res.status(404);
+      throw new Error("Client not found");
+    }
+
+    const exerciseAssignment = await prisma.exercise.findMany({
+      where: { studentId },
+      include: {
+        exercises: {
+          include: {
+            exerciseName: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!exerciseAssignment || exerciseAssignment.length === 0) {
+      return res.status(200).json({
+        status: "success",
+        data: [],
+        message: "No exercise assignment found",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data: exerciseAssignment,
+    });
   }
 
   const exerciseAssignment = await prisma.exercise.findMany({
-    where: { studentId },
+    where: { studentId: req.user.id },
     include: {
       exercises: {
         include: {
@@ -123,36 +150,17 @@ const getExerciseAssignment = asyncHandler(async (req, res) => {
     },
   });
 
-  // if exercise found and match for today's date
-  if (exerciseAssignment.length > 0) {
-    const currentDate = new Date().toDateString();
-
-    const exerciseAssignmentForToday = exerciseAssignment.find((assignment) => {
-      return assignment.date.toDateString() === currentDate;
-    });
-
-    // console.log(exerciseAssignmentForToday);
-
-    if (exerciseAssignmentForToday) {
-      return res.status(200).json({
-        status: "success",
-        data: exerciseAssignmentForToday,
-      });
-    }
-
-    // if no match for today's date
+  if (!exerciseAssignment || exerciseAssignment.length === 0) {
     return res.status(200).json({
       status: "success",
       data: [],
-      message: "No exercise assignment found for today",
+      message: "No exercise assignment found",
     });
   }
 
-  // if no exercise found
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
-    data: [],
-    message: "No exercise assignment found",
+    data: exerciseAssignment,
   });
 });
 
@@ -202,7 +210,15 @@ const assignExerciseToClient = asyncHandler(async (req, res) => {
             })),
           },
         },
-        include: { exercises: true },
+        include: {
+          exercises: {
+            include: {
+              exerciseName: {
+                select: { name: true },
+              },
+            },
+          },
+        },
       });
       updatedAssignment = updated;
     }
@@ -232,7 +248,15 @@ const assignExerciseToClient = asyncHandler(async (req, res) => {
         })),
       },
     },
-    include: { exercises: true },
+    include: {
+      exercises: {
+        include: {
+          exerciseName: {
+            select: { name: true },
+          },
+        },
+      },
+    },
   });
 
   if (!create) {
@@ -241,8 +265,6 @@ const assignExerciseToClient = asyncHandler(async (req, res) => {
       message: "Failed to create exercise assignment",
     });
   }
-
-  console.log("check 7");
 
   return res.json({
     status: "success",
