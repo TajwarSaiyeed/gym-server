@@ -2,6 +2,11 @@ const asyncHandler = require("express-async-handler");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+/**
+ * @route POST /api/v1/chat
+ * @description Create a chat or group chat || access a chat
+ * @access Private
+ */
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
 
@@ -20,6 +25,8 @@ const accessChat = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
+
+  let message = "Chat accessed successfully";
 
   let chat = await prisma.chat.findFirst({
     where: {
@@ -41,7 +48,6 @@ const accessChat = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
-    console.log("creating new chat");
     const createdChat = await prisma.chat.create({
       data: {
         name: user.name,
@@ -60,11 +66,53 @@ const accessChat = asyncHandler(async (req, res) => {
     });
 
     chat = createdChat;
+    message = "Chat created successfully";
   }
 
-  return res.status(200).json({ status: "success", data: chat });
+  return res.status(200).json({
+    status: "success",
+    message,
+    data: chat,
+  });
+});
+
+/**
+ * @route GET /api/v1/chat
+ * @description Get all chats
+ * @access Private
+ */
+const fetchChats = asyncHandler(async (req, res) => {
+  const chats = await prisma.chat.findMany({
+    where: {
+      users: {
+        some: {
+          id: req.user.id,
+        },
+      },
+    },
+    include: {
+      users: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!chats) {
+    res.status(404);
+    throw new Error("No chats found");
+  }
+
+  return res.status(200).json({
+    status: "success",
+    message: "Chats fetched successfully",
+    data: chats,
+  });
 });
 
 module.exports = {
   accessChat,
+  fetchChats,
 };

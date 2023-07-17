@@ -8,7 +8,17 @@ const router = express.Router();
 
 router
   .route("/")
-  // .get(fetchChats)
+  /**
+   * @route GET /api/v1/chat
+   * @description Get all chats
+   * @access Private
+   */
+  .get(protect, chatControllers.fetchChats)
+  /**
+   * @route POST /api/v1/chat
+   * @description Create a chat or group chat || access a chat
+   * @access Private
+   */
   .post(protect, chatControllers.accessChat);
 // router.route("/group").post(createGroupChat);
 // router.route("/rename").patch(renameGroup);
