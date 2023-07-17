@@ -63,11 +63,12 @@ model User {
 
   approved Boolean? @default(false)
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  Fees          Fees[]
-  Messages      Message[]
-  Chat          Chat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Fees      Fees[]
+  Chat      Chat[]
+
+  sender        Message[]      @relation("sender")
   GroupAdmin    Chat[]         @relation("GroupAdmin")
   NotifSender   Notification[] @relation("NotifSender")
   NotifReceiver Notification[] @relation("NotifReceiver")
@@ -179,10 +180,14 @@ model Fees {
 // // chat name, isGroupChat, users, latestMessage, createdAt, updatedAt, groupAdmin
 
 model Chat {
-  id           String    @id @default(uuid())
-  name         String
-  isGroupChat  Boolean   @default(false)
-  users        User[]
+  id          String  @id @default(uuid())
+  name        String
+  isGroupChat Boolean @default(false)
+  users       User[]
+
+  latestMessage   Message? @relation("latestMessage", fields: [latestMessageId], references: [id])
+  latestMessageId String?  @unique
+
   groupAdmin   User?     @relation("GroupAdmin", fields: [groupAdminId], references: [id])
   groupAdminId String?
   createdAt    DateTime  @default(now())
@@ -198,10 +203,12 @@ model Message {
   content   String
   chat      Chat     @relation(fields: [chatId], references: [id])
   chatId    String
-  sender    User     @relation(fields: [senderId], references: [id])
+  sender    User     @relation("sender", fields: [senderId], references: [id])
   senderId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  latestMessage Chat? @relation("latestMessage")
 }
 
 // Notification
