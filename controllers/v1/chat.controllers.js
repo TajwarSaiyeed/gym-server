@@ -260,6 +260,182 @@ const renameGroup = asyncHandler(async (req, res) => {
  */
 const addToGroup = asyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
+
+  if (!chatId || !userId) {
+    res.status(400);
+    throw new Error("Please provide chat id and user id");
+  }
+
+  const chat = await prisma.chat.findUnique({
+    where: {
+      id: chatId,
+      isGroupChat: true,
+    },
+  });
+
+  if (!chat) {
+    res.status(404);
+    throw new Error("Chat not found");
+  }
+
+  if (chat.groupAdminId !== req.user.id) {
+    res.status(401);
+    throw new Error("You are not authorized to add users to this group");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const updatedChat = await prisma.chat.update({
+    where: {
+      id: chatId,
+    },
+    data: {
+      users: {
+        connect: {
+          id: userId,
+        },
+      },
+    },
+    include: {
+      groupAdmin: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+
+      users: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      latestMessage: true,
+    },
+  });
+
+  if (!updatedChat) {
+    res.status(500);
+    throw new Error("Something went wrong");
+  }
+
+  return res.status(200).json({
+    status: "success",
+    message: "User added to group successfully",
+    data: updatedChat,
+  });
+});
+
+/**
+ * @route PATCH /api/v1/chat/groupremove
+ * @description Remove a user from a group chat
+ * @access Private (admin only)
+ * @body { chatId: String }
+ * @body { userId: String }
+ */
+const removeFromGroup = asyncHandler(async (req, res) => {
+  const { chatId, userId } = req.body;
+
+  if (!chatId || !userId) {
+    res.status(400);
+    throw new Error("Please provide chat id and user id");
+  }
+
+  const chat = await prisma.chat.findUnique({
+    where: {
+      id: chatId,
+      isGroupChat: true,
+    },
+  });
+
+  if (!chat) {
+    res.status(404);
+    throw new Error("Chat not found");
+  }
+
+  if (chat.groupAdminId !== req.user.id) {
+    res.status(401);
+    throw new Error("You are not authorized to remove users from this group");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  if (user.id === chat.groupAdminId) {
+    res.status(400);
+    throw new Error(
+      "You cannot remove the group admin or yourself from the group"
+    );
+  }
+
+  const updatedChat = await prisma.chat.update({
+    where: {
+      id: chatId,
+    },
+    data: {
+      users: {
+        disconnect: {
+          id: userId,
+        },
+      },
+    },
+    include: {
+      groupAdmin: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+
+      users: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      latestMessage: true,
+    },
+  });
+
+  if (!updatedChat) {
+    res.status(500);
+    throw new Error("Something went wrong");
+  }
+
+  return res.status(200).json({
+    status: "success",
+    message: "User removed from group successfully",
+    data: updatedChat,
+  });
 });
 
 module.exports = {
@@ -268,4 +444,5 @@ module.exports = {
   createGroupChat,
   renameGroup,
   addToGroup,
+  removeFromGroup,
 };

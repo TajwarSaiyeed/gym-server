@@ -44,7 +44,7 @@ router
   .patch(protect, admin, chatControllers.renameGroup);
 
 router
-  .route("/groupadd")
+  .route("/add")
   /**
    * @route PATCH /api/v1/chat/groupadd
    * @description Add a user to a group chat
@@ -53,6 +53,16 @@ router
    * @body { userId: String }
    */
   .patch(protect, admin, chatControllers.addToGroup);
-// router.route("/groupremove").put(removeFromGroup);
+
+router
+  .route("/remove")
+  /**
+   * @route PATCH /api/v1/chat/groupremove
+   * @description Remove a user from a group chat
+   * @access Private (admin only)
+   * @body { chatId: String }
+   * @body { userId: String }
+   */
+  .put(protect, admin, chatControllers.removeFromGroup);
 
 module.exports = router;
