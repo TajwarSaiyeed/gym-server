@@ -7,6 +7,17 @@ const generateToken = require("../../utils/generateToken");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+/**
+ * @desc    Register a new user
+ * @route   POST /api/v1/users
+ * @access  Private
+ * @body    {String} name
+ * @body    {String} email
+ * @body    {String} password
+ * @body    {String} image
+ * @body    {Boolean} isActive
+ */
+
 const registerUser = asyncHandler(async (req, res) => {
   const {
     name,
@@ -112,8 +123,11 @@ const registerUser = asyncHandler(async (req, res) => {
  * @description Authenticate User /set token
  * @route   POST /api/v1/users/auth
  * @access  Public
- *
- *
+ * @returns {object} message
+ * @returns {object} user
+ * @returns {object} token
+ * @returns {object} error
+ * @method  POST
  */
 
 const authUser = asyncHandler(async (req, res) => {
@@ -178,6 +192,10 @@ const authUser = asyncHandler(async (req, res) => {
  * @desc    Logout user and clear cookie
  * @route   POST /api/v1/users/logout
  * @access  Public
+ * @returns {object} message
+ * @returns {object} error
+ * @cookie  {string} token
+ * @clears  {string} token
  */
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -205,6 +223,8 @@ const logoutUser = asyncHandler(async (req, res) => {
  * @route   GET /api/v1/users/profile
  * @access  Private
  * @returns {object} user
+ * @returns {object} admin
+ * @returns {object} trainer
  */
 
 const getUserProfile = asyncHandler(async (req, res) => {
@@ -249,6 +269,16 @@ const getUserProfile = asyncHandler(async (req, res) => {
  * @desc    Update user profile
  * @route   PUT /api/v1/users/profile
  * @access  Private
+ * @returns {object} user
+ * @body {String} name - user name
+ * @body {String} password - user password
+ * @body {String} image - user image
+ * @body {String} gender
+ * @body {Number} age
+ * @body {Number} height
+ * @body {Number} weight
+ * @body {String} goal
+ * @body {String} level
  */
 
 const updateUserProfile = asyncHandler(async (req, res) => {
@@ -322,9 +352,12 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update user profile by admin or trainer
- * @route   GET /api/v1/users/profile
+ * @route   PUT /api/v1/users/profile/updateUser
  * @access  Private
  * @returns {object} user
+ * @body    {string} email - user email
+ * @body    {string} trainerId - trainer id
+ * @body    {boolean} approved - user approved
  */
 
 const userUpdateByAdminOrTrainer = asyncHandler(async (req, res) => {
@@ -376,6 +409,8 @@ const userUpdateByAdminOrTrainer = asyncHandler(async (req, res) => {
  * @desc    Get all users
  * @route   GET /api/v1/users
  * @access  Private
+ * @query   page
+ * @query   limit
  * @returns {object} users
  * @returns {object} count
  * @returns {object} pages
@@ -447,6 +482,60 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @desc    Search users
+ * @route   GET /api/v1/users/search
+ * @access  Private
+ * @returns {object} users - users that match the search query string name or email and not the current user
+ * @query   {string} name - name of the user
+ * @query   {string} email - email of the user
+ */
+const searchUsers = asyncHandler(async (req, res) => {
+  const search = req.query.search;
+
+  const users = await prisma.user.findMany({
+    where: {
+      AND: [
+        {
+          OR: [
+            {
+              name: {
+                contains: search,
+              },
+            },
+            {
+              email: {
+                contains: search,
+              },
+            },
+          ],
+        },
+        {
+          NOT: {
+            id: req.user.id,
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+    },
+  });
+
+  if (!users) {
+    res.status(404);
+    throw new Error("Users not found");
+  }
+
+  return res.status(200).json({
+    status: "success",
+    data: users,
+  });
+});
+
 module.exports = {
   registerUser,
   authUser,
@@ -455,4 +544,5 @@ module.exports = {
   updateUserProfile,
   userUpdateByAdminOrTrainer,
   getAllUsers,
+  searchUsers,
 };

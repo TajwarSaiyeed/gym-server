@@ -12,6 +12,7 @@ const chatRoutes = require("./routes/v1/chat.routes");
 const dietRoutes = require("./routes/v1/diet.routes");
 const exerciseRoutes = require("./routes/v1/exercise.routes");
 const feesRoutes = require("./routes/v1/fees.routes");
+const messageRoutes = require("./routes/v1/message.routes");
 const notificationRoutes = require("./routes/v1/notification.routes");
 const userRoutes = require("./routes/v1/user.routes");
 
@@ -29,6 +30,7 @@ app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/diet", dietRoutes);
 app.use("/api/v1/exercise", exerciseRoutes);
 app.use("/api/v1/fees", feesRoutes);
+app.use("/api/v1/message", messageRoutes);
 app.use("/api/v1/notification", notificationRoutes);
 app.use("/api/v1/users", userRoutes);
 
